@@ -59,75 +59,8 @@ PDClean$O2 <- Convert_Negative_score(PDClean$O2)
 PDClean$O4 <- Convert_Negative_score(PDClean$O4)
 PDClean$O6 <- Convert_Negative_score(PDClean$O6)
 
-PDMelted <- pivot_longer(PDClean, cols=c(
-  "E1", 
-  "E2", 
-  "E3", 
-  "E4",
-  "E5",
-  "E6", 
-  "E7", 
-  "E8", 
-  "E9",
-  "E10",
-  "N1", 
-  "N2", 
-  "N3", 
-  "N4",
-  "N5",
-  "N6", 
-  "N7", 
-  "N8", 
-  "N9",
-  "N10",
-  "A1", 
-  "A2", 
-  "A3", 
-  "A4",
-  "A5",
-  "A6", 
-  "A7", 
-  "A8", 
-  "A9",
-  "A10",
-  "C1", 
-  "C2", 
-  "C3", 
-  "C4",
-  "C5",
-  "C6", 
-  "C7", 
-  "C8", 
-  "C9",
-  "C10",
-  "O1", 
-  "O2", 
-  "O3", 
-  "O4",
-  "O5",
-  "O6", 
-  "O7", 
-  "O8", 
-  "O9",
-  "O10"
-  ))
-
-
-
-PopUS <- subset.data.frame(PDMelted, PDMelted$country == "US" && PDMelted$age > 0 && PDMelted$age < 100)
-
-
 ```
 
-```{r, echo=FALSE}
-ExUS <- subset.data.frame(PopUS, name == "E1" || name == "E2" || name == "E3" || name == "E4" || name == "E5" || name == "E6" || name == "E7" || name == "E8" || name == "E9" || name == "E10")
-
-
-
-ggplot(ExUS, aes(x=age, y=value)) + geom_point(data = ExUS, mapping = aes(x=age, y=value), alpha=.01) + xlim(10, 100)
-
-```
-looking at the above graph of age versus extroversion, it seems there is little relation between age and being introverted or extroverted with the exception of after age 60 it appears like less people are strongly introverted. 
 
 ```{r, echo=FALSE}
 
@@ -191,7 +124,7 @@ ggplot(USAvg, aes(x=age, y=Neuroticism)) + geom_point(data = USAvg, mapping = ae
 
 ggplot(USAvg, aes(x=age, y=Agreeableness)) + geom_point(data = USAvg, mapping = aes(x=age, y=Agreeableness), alpha=.1, color="orange") + xlim(10, 100)
 ```
-If we take the averages of all of the question's scores for each trait for respondents in the US, we see that most respondents were age 25 or younger. We also see trends, such as Agreeableness and Openness tend to be higher than 2. Conscientiousness and Neuroticism seem to avoid the valences of 1 and 5.Exterversion, on the other hand, appears to be across the board.
+If we take the averages of all of the question's scores for each trait for respondents in the US, we see that most respondents were age 25 or younger. We also see trends, such as Agreeableness and Openness tend to be higher than 2. Conscientiousness and Neuroticism seem to avoid the valences of 1 and 5.Extroversion, on the other hand, appears to be across the board.looking at the above graph of age versus extroversion, it seems there is little relation between age and being introverted or extroverted with the exception of after age 60 it appears like less people are strongly introverted. 
 
 ```{r, echo=FALSE}
 
@@ -207,6 +140,32 @@ ggplot(CAAvg, aes(x=age, y=Neuroticism)) + geom_point(data = CAAvg, mapping = ae
 
 ggplot(CAAvg, aes(x=age, y=Agreeableness)) + geom_point(data = CAAvg, mapping = aes(x=age, y=Agreeableness), alpha=.1, color="orange") + xlim(10, 100)
 ```
+```{r, echo=TRUE}
+
+CountryCount <- PDClean %>% count(country)
+View(CountryCount)
+TopCountries <- subset.data.frame(CountryCount, CountryCount$n > 500)
+View(TopCountries)
+```
+
+As seen by this R code, the top countries with observations in this dataset are English speaking countries. I will be looking at these countries next and similarities and differences within these countries to see if country, age, and sex result in significant differences. 
+
+
+```{r, echo=FALSE}
+TopPD <- subset.data.frame(PDClean, country == "US" | country == "AU" | country == "CA" | country == "GB" | country == "IN" | country == "PH")
+
+
+ggplot(TopPD, aes(x=country, y=Extraversion)) + geom_point(data = TopPD, mapping = aes(x=country, y=Extraversion), alpha=.01, color="red")
+
+ggplot(TopPD, aes(x=country, y=Openness)) + geom_point(data = TopPD, mapping = aes(x=country, y=Openness), alpha=.01, color="blue") 
+
+ggplot(TopPD, aes(x=country, y=Conscientiousness)) + geom_point(data = TopPD, mapping = aes(x=country, y=Conscientiousness), alpha=.01, color="green")
+
+ggplot(TopPD, aes(x=country, y=Neuroticism)) + geom_point(data = TopPD, mapping = aes(x=country, y=Neuroticism), alpha=.01, color="purple") 
+
+ggplot(TopPD, aes(x=country, y=Agreeableness)) + geom_point(data = TopPD, mapping = aes(x=country, y=Agreeableness), alpha=.01, color="orange") 
+```
+
 
 
 ## Topics From Class

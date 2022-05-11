@@ -117,15 +117,15 @@ PDClean <- na.omit(PDClean)
 PDClean <- subset.data.frame(PDClean, gender != 0 & engnat < 3)
 
 
-ggplot(PDClean, aes(x=age, y=Extraversion)) + geom_point(data = PDClean, mapping = aes(x=age, y=Extraversion), alpha=.1, color="red") + xlim(10, 100)
+ggplot(PDClean, aes(x=age, y=Extraversion)) + geom_point(data = PDClean, mapping = aes(x=age, y=Extraversion, color=gender), alpha=.1, color="red") + xlim(10, 100)
 
-ggplot(PDClean, aes(x=age, y=Openness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Openness), alpha=.1, color="blue") + xlim(10, 100)
+ggplot(PDClean, aes(x=age, y=Openness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Openness, color=gender), alpha=.1) + xlim(10, 100)
 
-ggplot(PDClean, aes(x=age, y=Conscientiousness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Conscientiousness), alpha=.1, color="green") + xlim(10, 100)
+ggplot(PDClean, aes(x=age, y=Conscientiousness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Conscientiousness, color=gender), alpha=.1) + xlim(10, 100)
 
-ggplot(PDClean, aes(x=age, y=Neuroticism)) + geom_point(data = PDClean, mapping = aes(x=age, y=Neuroticism), alpha=.1, color="purple") + xlim(10, 100)
+ggplot(PDClean, aes(x=age, y=Neuroticism)) + geom_point(data = PDClean, mapping = aes(x=age, y=Neuroticism, color=gender), alpha=.1) + xlim(10, 100)
 
-ggplot(PDClean, aes(x=age, y=Agreeableness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Agreeableness), alpha=.1, color="orange") + xlim(10, 100)
+ggplot(PDClean, aes(x=age, y=Agreeableness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Agreeableness, color=gender), alpha=.1) + xlim(10, 100)
 ```
 If we take the averages of all of the question's scores for each trait for respondents in the US, we see that most respondents were age 25 or younger. We also see trends, such as Agreeableness and Openness tend to be higher than 2. Conscientiousness and Neuroticism seem to avoid the valences of 1 and 5.Extroversion, on the other hand, appears to be across the board.looking at the above graph of age versus extroversion, it seems there is little relation between age and being introverted or extroverted with the exception of after age 60 it appears like less people are strongly introverted. 
 
@@ -339,17 +339,17 @@ HighACMelted %>%
 
 ```{r, echo=FALSE}
 
-PDGender$ACavg <- (PDGender$agreeableness+PDGender$extroversion)/2
+PDGender$ACavg <- (PDGender$agreeableness+PDGender$conscientiousness)/2
 
-ggplot(PDGender, aes(x=ACavg, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=extroversion), alpha=.1, color="red") + xlim(0, 5) +
+ggplot(PDGender, aes(x=ACavg, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
     ggtitle("Agreeableness and Conscientiousness Average relationship with Extroversion Scatter Plot") +
     xlab("")
 
-ggplot(PDGender, aes(x=ACavg, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=neuroticism), alpha=.1, color="purple") + xlim(0, 5) +
+ggplot(PDGender, aes(x=ACavg, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=neuroticism, color=country), alpha=.1) + xlim(0, 5) +
     ggtitle("Agreeableness and Conscientiousness Average relationship with Neuroticism Scatter Plot") +
     xlab("")
 
-ggplot(PDGender, aes(x=ACavg, y=openness)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=openness), alpha=.1, color="blue") + xlim(0, 5) +
+ggplot(PDGender, aes(x=ACavg, y=openness)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=openness, color=country), alpha=.1) + xlim(0, 5) +
     ggtitle("Agreeableness and Conscientiousness Average relationship with Openness to Experience Scatter Plot") +
     xlab("")
 
@@ -357,18 +357,73 @@ ggplot(PDGender, aes(x=ACavg, y=openness)) + geom_point(data = PDGender, mapping
 
 ```{r, echo=FALSE}
 
-PDGender$ACavg <- (PDGender$agreeableness+PDGender$extroversion)/2
+PDGender$ACavg <- (PDGender$agreeableness+PDGender$conscientiousness)/2
 
-ggplot(PDGender, aes(x=agreeableness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=extroversion), alpha=.1, color="red") + xlim(0, 5) +
-    ggtitle("Agreeableness and Conscientiousness Average relationship with Extroversion Scatter Plot") +
+OtherCountries <- subset.data.frame(PDGender, country == "Other")
+
+ggplot(PDGender, aes(x=agreeableness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness relationship with Extroversion Scatter Plot") +
     xlab("")
 
-ggplot(PDGender, aes(x=conscientiousness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=conscientiousness, y=extroversion), alpha=.1, color="red") + xlim(0, 5) +
-    ggtitle("Agreeableness and Conscientiousness Average relationship with Extroversion Scatter Plot") +
+ggplot(PDGender, aes(x=conscientiousness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=conscientiousness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Conscientiousness relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(PDGender, aes(x=extroversion, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=extroversion, y=neuroticism, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+
+ggplot(OtherCountries, aes(x=agreeableness, y=extroversion)) + geom_point(data = OtherCountries, mapping = aes(x=agreeableness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(OtherCountries, aes(x=conscientiousness, y=extroversion)) + geom_point(data = OtherCountries, mapping = aes(x=conscientiousness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Conscientiousness relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(OtherCountries, aes(x=extroversion, y=neuroticism)) + geom_point(data = OtherCountries, mapping = aes(x=extroversion, y=neuroticism, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(PDGender, aes(x=agreeableness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(PDGender, aes(x=conscientiousness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=conscientiousness, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Conscientiousness relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(PDGender, aes(x=neuroticism, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=neuroticism, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism relationship with Extroversion Scatter Plot") +
     xlab("")
 
 ```
+```{r, echo=FALSE}
 
+PDGender$ANavg <- (PDGender$agreeableness+PDGender$neuroticism)/2
+
+
+ggplot(PDGender, aes(x=ANavg, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=ANavg, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism Agreeableness Avg relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+ggplot(PDGender, aes(x=ANavg)) + geom_histogram(data = PDGender, mapping = aes(x=ANavg, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism Agreeableness Avg relationship with Extroversion Scatter Plot") +
+    xlab("")
+
+genderCount <- count(PDGender$sex)
+
+ggplot(genderCount, aes(x="", y=freq, fill=x)) +
+  geom_bar(stat="identity", width=1) + coord_polar("y", start=0)
+
+ggplot(PDGender, aes(x=age, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=age, y=extroversion, color=sex), alpha=.1) + xlim(10, 100)
+ggplot(PDGender, aes(x=age, y=openness)) + geom_point(data = PDGender, mapping = aes(x=age, y=openness, color=sex), alpha=.1) + xlim(10, 100)
+ggplot(PDGender, aes(x=age, y=conscientiousness)) + geom_point(data = PDGender, mapping = aes(x=age, y=conscientiousness, color=sex), alpha=.1) + xlim(10, 100)
+ggplot(PDGender, aes(x=age, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=age, y=neuroticism, color=sex), alpha=.1) + xlim(10, 100)
+ggplot(PDGender, aes(x=age, y=agreeableness)) + geom_point(data = PDGender, mapping = aes(x=age, y=agreeableness, color=sex), alpha=.1) + xlim(10, 100)
+
+```
 
 
 

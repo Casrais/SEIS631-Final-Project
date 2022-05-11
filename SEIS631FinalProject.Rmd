@@ -117,7 +117,7 @@ PDClean <- na.omit(PDClean)
 PDClean <- subset.data.frame(PDClean, gender != 0 & engnat < 3)
 
 
-ggplot(PDClean, aes(x=age, y=Extraversion)) + geom_point(data = PDClean, mapping = aes(x=age, y=Extraversion, color=gender), alpha=.1, color="red") + xlim(10, 100)
+ggplot(PDClean, aes(x=age, y=Extraversion)) + geom_point(data = PDClean, mapping = aes(x=age, y=Extraversion, color=gender), alpha=.1) + xlim(10, 100)
 
 ggplot(PDClean, aes(x=age, y=Openness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Openness, color=gender), alpha=.1) + xlim(10, 100)
 
@@ -184,8 +184,7 @@ PDCombinedMelted <- pivot_longer(PDcombined, cols=c("extroversion", "conscientio
 PDCombinedMelted %>%
   ggplot( aes(x=country, y=value, fill=name)) +
     geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.01) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.3)+
     theme(
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
       plot.title = element_text(size=11)
@@ -196,8 +195,7 @@ PDCombinedMelted %>%
 PDCombinedMelted %>%
   ggplot( aes(x=engnatLabel, y=value, fill=name)) +
     geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.01) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.3)+
     theme(
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
       plot.title = element_text(size=11)
@@ -417,11 +415,11 @@ genderCount <- count(PDGender$sex)
 ggplot(genderCount, aes(x="", y=freq, fill=x)) +
   geom_bar(stat="identity", width=1) + coord_polar("y", start=0)
 
-ggplot(PDGender, aes(x=age, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=age, y=extroversion, color=sex), alpha=.1) + xlim(10, 100)
-ggplot(PDGender, aes(x=age, y=openness)) + geom_point(data = PDGender, mapping = aes(x=age, y=openness, color=sex), alpha=.1) + xlim(10, 100)
-ggplot(PDGender, aes(x=age, y=conscientiousness)) + geom_point(data = PDGender, mapping = aes(x=age, y=conscientiousness, color=sex), alpha=.1) + xlim(10, 100)
-ggplot(PDGender, aes(x=age, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=age, y=neuroticism, color=sex), alpha=.1) + xlim(10, 100)
-ggplot(PDGender, aes(x=age, y=agreeableness)) + geom_point(data = PDGender, mapping = aes(x=age, y=agreeableness, color=sex), alpha=.1) + xlim(10, 100)
+ggplot(PDGender, aes(x=age, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=age, y=extroversion, color=sex), alpha=.1) + xlim(0, 75)
+ggplot(PDGender, aes(x=age, y=openness)) + geom_point(data = PDGender, mapping = aes(x=age, y=openness, color=sex), alpha=.1) + xlim(0, 75)
+ggplot(PDGender, aes(x=age, y=conscientiousness)) + geom_point(data = PDGender, mapping = aes(x=age, y=conscientiousness, color=sex), alpha=.1) + xlim(0, 75)
+ggplot(PDGender, aes(x=age, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=age, y=neuroticism, color=sex), alpha=.1) + xlim(0, 75)
+ggplot(PDGender, aes(x=age, y=agreeableness)) + geom_point(data = PDGender, mapping = aes(x=age, y=agreeableness, color=sex), alpha=.1) + xlim(0, 75)
 
 ```
 

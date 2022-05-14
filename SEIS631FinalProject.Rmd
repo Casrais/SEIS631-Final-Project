@@ -1,12 +1,12 @@
 ---
-title: "SEIS631 Final Project"
+title: "SEIS631 Final Project: Big Five OCEAN Personality Analysis"
 author: "Nikolai"
 date: "5/4/2022"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(viridis)
 library(hrbrthemes)
@@ -20,18 +20,21 @@ Convert_Negative_score <- function(x) {return (5-x)}
 Personality has always been a fascination of mine. While many personality tests have little validity or predictive value, The Big Five personality tests have a reputation of being a good measure with predictive power. I have found a publicly available dataset of demographic information and personality data that I wish to analyze using techniques taught in class.
 
 
-## What
+### What
 As mentioned earlier, the Big Five Personality test is thought to be one of the more accurate and predictive personality tests for human behavior. For example, having a combination of high Agreeableness and Conscientiousness usually means the person is going to be a good employee while having high neuroticism is related to a variety of bad outcomes. I would like to see if there are relationships between the expression of different personality traits across countries and gender. 
 
-## Why
+This dataset was not created by myself, and can be found at [Kaggle](https://www.kaggle.com/datasets/lucasgreenwell/ocean-five-factor-personality-test-responses)
+
+
+### Why
 While we know that the expression of certain combinations of personality traits predict certain behaviors, these traits are often seen as being separate and distinct measures of personality. I argue that there are likely 'personality types' - combinations of these traits that are more likely to occur together - that define subsets of the population.
 
-## How
+### How
 My plan is to subset the dataset while controlling for the expression of one or more personality traits. Using these traits as a control, I will look to see if the other traits expression in this subset is significantly different from the normal population. 
 
 ## Body
 
-## Cleaning the data.
+### Cleaning the data.
 The dataset was quite large and had demographic information and the actual responses to the individual questions. While this is ideal, it means the dataset must be cleaned to be useful. For example, to account for the tendency to give high ratings over low ratings regardless of the question's content, several of the questions are stated negatively. For example, on a rating of 1-5, answering the question 'I like to talk' with a 5 would be high extroversion, but answering the question 'I don't like loud parties' with a 5 would actually be the opposite. I will write a function to inverse a question's rating and then manually code which questions are positive or negative and apply the function only to negative questions. Then, because there would be too many rows with this dataset if looking only at the individual questions, I will average the answers per trait to get a single score for the five traits.
 
 ```{r, echo=FALSE}
@@ -58,11 +61,6 @@ PDClean$C8 <- Convert_Negative_score(PDClean$C8)
 PDClean$O2 <- Convert_Negative_score(PDClean$O2)
 PDClean$O4 <- Convert_Negative_score(PDClean$O4)
 PDClean$O6 <- Convert_Negative_score(PDClean$O6)
-
-```
-
-
-```{r, echo=FALSE}
 
 PDClean$Extraversion <- with(PDClean, (E1+E2+E3+E4+E5+E6+E7+E8+E9+E10)/10)
 PDClean$Neuroticism <- with(PDClean, 
@@ -114,20 +112,95 @@ PDClean$Agreeableness <- with(PDClean,
 
 
 PDClean <- na.omit(PDClean)
-PDClean <- subset.data.frame(PDClean, gender != 0 & engnat < 3)
+PDClean <- subset.data.frame(PDClean, gender != 0 & gender != 3 & engnat != 0)
+
+PDmajor <- subset.data.frame(PDClean, country == "AU" | country == "US" | country == "CA" | country == "GB" | country == "IN" | country == "PH")
+
+PDminor <- subset.data.frame(PDClean, country != "AU" & country != "US" & country != "CA" & country != "GB" & country != "IN" & country != "PH")
+
+PDmajoragain <- data.frame(race = PDmajor$race,age = PDmajor$age,engnat =  PDmajor$engnat, gender = PDmajor$gender, hand = PDmajor$hand, source = PDmajor$source, country = PDmajor$country, extroversion = PDmajor$Extraversion, neuroticism = PDmajor$Neuroticism,openness =  PDmajor$Openness,conscientiousness = PDmajor$Conscientiousness, agreeableness = PDmajor$Agreeableness)
+
+PDminoragain <- data.frame(race = PDminor$race,age = PDminor$age, engnat = PDminor$engnat,  gender = PDminor$gender, hand = PDminor$hand, source = PDminor$source, country = "Other", extroversion = PDminor$Extraversion, neuroticism = PDminor$Neuroticism, openness = PDminor$Openness,conscientiousness =  PDminor$Conscientiousness, agreeableness = PDminor$Agreeableness)
+
+PDcombined <- rbind(PDmajoragain, PDminoragain)
+
+PDcombined$sex <- mapvalues(PDcombined$gender, from = c(1,2), to = c("Male", "Female"))
+
+PDcombined$engnatLabel <- mapvalues(PDcombined$engnat, from = c(1,2), to = c("Native English", "Not Native English"))
+
+PDGender <- PDcombined
+
+PDGender$ANavg <- (PDGender$agreeableness+PDGender$neuroticism)/2
+
+PDGender$ECavg <- (PDGender$extroversion+PDGender$conscientiousness)/2
+
+PDGender$EAavg <- (PDGender$extroversion+PDGender$agreeableness)/2
+
+PDGender$ONavg <- (PDGender$openness+Convert_Negative_score(PDGender$neuroticism))/2
+
+NativeEng <- subset.data.frame(PDGender, engnat == 1)
+NotNativeEng <- subset.data.frame(PDGender, engnat == 2)
+
+PDGender$OCEANavg <- (PDGender$extroversion+PDGender$conscientiousness+PDGender$agreeableness+PDGender$neuroticism+PDGender$openness)/5
+
+males <- subset.data.frame(PDGender, gender == 1)
+females <- subset.data.frame(PDGender, gender == 2)
+
+ENmales <- subset.data.frame(NativeEng, gender == 1)
+NENmales <- subset.data.frame(NotNativeEng, gender == 1)
 
 
-ggplot(PDClean, aes(x=age, y=Extraversion)) + geom_point(data = PDClean, mapping = aes(x=age, y=Extraversion, color=gender), alpha=.1) + xlim(10, 100)
-
-ggplot(PDClean, aes(x=age, y=Openness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Openness, color=gender), alpha=.1) + xlim(10, 100)
-
-ggplot(PDClean, aes(x=age, y=Conscientiousness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Conscientiousness, color=gender), alpha=.1) + xlim(10, 100)
-
-ggplot(PDClean, aes(x=age, y=Neuroticism)) + geom_point(data = PDClean, mapping = aes(x=age, y=Neuroticism, color=gender), alpha=.1) + xlim(10, 100)
-
-ggplot(PDClean, aes(x=age, y=Agreeableness)) + geom_point(data = PDClean, mapping = aes(x=age, y=Agreeableness, color=gender), alpha=.1) + xlim(10, 100)
+PDCombinedMelted <- pivot_longer(PDcombined, cols=c("extroversion", "conscientiousness", "openness", "agreeableness", "neuroticism"))
 ```
-If we take the averages of all of the question's scores for each trait for respondents in the US, we see that most respondents were age 25 or younger. We also see trends, such as Agreeableness and Openness tend to be higher than 2. Conscientiousness and Neuroticism seem to avoid the valences of 1 and 5.Extroversion, on the other hand, appears to be across the board.looking at the above graph of age versus extroversion, it seems there is little relation between age and being introverted or extroverted with the exception of after age 60 it appears like less people are strongly introverted. 
+
+### Viewing the raw data to analyze major trends in age and gender
+
+
+After cleaning the data, I decided to plot the data using scatter plots comparing each trait to age and gender to see if I could see any glaring trends.
+
+```{r, echo=FALSE}
+
+ggplot(PDGender, aes(x=age, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=age, y=extroversion, color=sex), alpha=.1) + xlim(10, 100)+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=extroversion, color=sex))  +
+    ggtitle("Age vs Extroversion by Sex Scatter Plot")
+```
+Extroversion had a great degree of variability, ranging all the way to the extremes of 5 and 0. There does appear to be a trend towards older respondents being more extroverted, and this trend seems more prominent in the female population, but with this kind of variability I would not expect the correlation to be very high, or the trend to be very significant or explanatory.
+
+
+```{r, echo=FALSE}
+
+ggplot(PDGender, aes(x=age, y=openness)) + geom_point(data = PDGender, mapping = aes(x=age, y=openness, color=sex), alpha=.1) + xlim(10, 100)+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=openness, color=sex))  +
+    ggtitle("Age vs Openness by Sex Scatter Plot")
+```
+The data seems to indicate with openness to experience that males tend to rate themselves higher than females slightly. I can see from the data here that most people, most of the time rate themselves high on openness. This is a little disappointing, because it means that openness will not be a good explanatory variable. I am expecting to see little significant differences between populations regarding openness.
+
+
+```{r, echo=FALSE}
+
+ggplot(PDGender, aes(x=age, y=conscientiousness)) + geom_point(data = PDGender, mapping = aes(x=age, y=conscientiousness, color=sex), alpha=.1) + xlim(10, 100)+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=conscientiousness, color=sex))  +
+    ggtitle("Age vs Conscientiousness by Sex Scatter Plot")
+```
+Conscientiousness does not appear to have significant differences between male and female populations, but does appear to have an upward trend regarding age. The spread of the points, however, is large and I am expecting the correlation to be small. Older populations seem to rate themselves consistently higher than a 2 on conscientiousness.
+
+
+```{r, echo=FALSE}
+
+ggplot(PDGender, aes(x=age, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=age, y=neuroticism, color=sex), alpha=.1) + xlim(10, 100)+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=neuroticism, color=sex))  +
+    ggtitle("Age vs Neuroticism by Sex Scatter Plot")
+```
+Neuroticism appears to be very interesting. Not only do I see a negative trend in the data over age, but also the regression lines between males and females have very different slopes and actually cross in the data. It appears like males have a greater spread than females in responses, resulting in a very level regression line. Females likely rate themselves as more neurotic in younger populations and less neurotic in older populations than their male counterparts.
+
+
+
+```{r, echo=FALSE}
+
+ggplot(PDGender, aes(x=age, y=agreeableness)) + geom_point(data = PDGender, mapping = aes(x=age, y=agreeableness, color=sex), alpha=.1) + xlim(10, 100)+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=agreeableness, color=sex))  +
+    ggtitle("Age vs Agreeableness by Sex Scatter Plot")
+
+```
+Agreeableness also is interesting and likely has significant differences. The regression line and scatter plot show that as age increases, so does agreeableness. The spread is also lower than we saw in the other traits. The regression line shows that while the slope of the regression line is similar for males and females over age, females appear to rate themselves as more agreeable than males consistently. I am expecting there to be significant differences in populations between these two groups.
+
+
+### Trends in Country, Gender, and English Native Speakers
 
 ```{r, echo=FALSE}
 
@@ -137,9 +210,6 @@ TopCountries <- subset.data.frame(CountryCount, CountryCount$count > 500)
 
 
 ```
-
-As seen by this R code, the top countries with observations in this dataset are English speaking countries. I will be looking at these countries next and similarities and differences within these countries to see if country, age, and sex result in significant differences. 
-
 
 ```{r, echo=FALSE}
 CCmajor <- subset.data.frame(CountryCount, count > 400)
@@ -152,34 +222,44 @@ CCminoragain <- data.frame(country = "Other", count = CCminorOne)
 
 CCCombined <- rbind(CCmajor, CCminoragain)
 
+
+
 CCCombined <- CCCombined %>% 
   arrange(desc(country)) %>%
   mutate(prop = CCCombined$count / sum(CCCombined$count) *100) %>%
   mutate(ypos = cumsum(prop)- 0.5*prop )
 
 ggplot(CCCombined, aes(x="", y=count, fill=country)) +
-  geom_bar(stat="identity", width=1) + coord_polar("y", start=0)
+  geom_bar(stat="identity", width=1) + coord_polar("y", start=0)  +
+    ggtitle("Observations by Country Pie Chart")
+
 
 
 ```
+As seen by this R code, the top countries with observations in this dataset are English speaking countries. I will be looking at these countries next and similarities and differences within these countries to see if country, age, and sex result in significant differences. Here is a table that shows the observations per sex and country:
+
 
 ```{r, echo=FALSE}
 
-PDmajor <- subset.data.frame(PDClean, country == "AU" | country == "US" | country == "CA" | country == "GB" | country == "IN" | country == "PH")
+table(PDcombined$country, PDcombined$sex)
 
-PDminor <- subset.data.frame(PDClean, country != "AU" & country != "US" & country != "CA" & country != "GB" & country != "IN" & country != "PH")
+mosaicplot(table(PDcombined$country, PDcombined$sex), main = "Distribution by Country and sex")
+```
+According to the data, we have a higher percentage of female respondents than males in all countries except India. Almost half of our respondents are from the US, and about 3/4 are from English speaking countries. This is a large dataset, so I'm not too concerned with fewer responses leading to less power, but from now on when doing statistics I will be using density functions to determine the percentage of respondents versus the actual counts as the counts of the comparing populations vary.
 
-PDmajoragain <- data.frame(race = PDmajor$race,age = PDmajor$age,engnat =  PDmajor$engnat, gender = PDmajor$gender, hand = PDmajor$hand, source = PDmajor$source, country = PDmajor$country, extroversion = PDmajor$Extraversion, neuroticism = PDmajor$Neuroticism,openness =  PDmajor$Openness,conscientiousness = PDmajor$Conscientiousness, agreeableness = PDmajor$Agreeableness)
+```{r, echo=FALSE}
+genderCount <- count(PDGender$sex)
 
-PDminoragain <- data.frame(race = PDminor$race,age = PDminor$age, engnat = PDminor$engnat,  gender = PDminor$gender, hand = PDminor$hand, source = PDminor$source, country = "Other", extroversion = PDminor$Extraversion, neuroticism = PDminor$Neuroticism, openness = PDminor$Openness,conscientiousness =  PDminor$Conscientiousness, agreeableness = PDminor$Agreeableness)
+ggplot(genderCount, aes(x="", y=freq, fill=x)) +
+  geom_bar(stat="identity", width=1) + coord_polar("y", start=0)  +
+    ggtitle("Observations by Sex Pie Chart")
 
-PDcombined <- rbind(PDmajoragain, PDminoragain)
+```
+In fact, as seen in this pie chart, we have approximately 2/3 females to 1/3 male respondents overall. This again illustrates the need to use density equations and normalized graphs when analyzing the data.
 
-PDcombined$sex <- mapvalues(PDcombined$gender, from = c(1,2,3), to = c("Male", "Female", "Other"))
 
-PDcombined$engnatLabel <- mapvalues(PDcombined$gender, from = c(1,2), to = c("Native English", "Not Native English"))
 
-PDCombinedMelted <- pivot_longer(PDcombined, cols=c("extroversion", "conscientiousness", "openness", "agreeableness", "neuroticism"))
+```{r, echo=FALSE}
 
 PDCombinedMelted %>%
   ggplot( aes(x=country, y=value, fill=name)) +
@@ -191,31 +271,75 @@ PDCombinedMelted %>%
     ) +
     ggtitle("Traits by Country Boxplot") +
     xlab("") 
+```
+Looking at the boxplot of the different countries and their responses, what strikes me is we have a very similar distribution of personality across countries. We are seeing the same shape and standard deviations- that being high agreeableness and openness, medium conscientiousness and neuroticism, and a tendency towards low extroversion with high variability. My expectation after seeing these graphs is that there will not be many, if any, significant or interesting differences between countries.
 
+```{r, echo=FALSE}
+EnglishNativeCount <- count(PDGender$engnatLabel)
+
+ggplot(EnglishNativeCount, aes(x="", y=freq, fill=x)) +
+  geom_bar(stat="identity", width=1) + coord_polar("y", start=0)  +
+    ggtitle("Observations by Native English Speaker Pie Chart")
+```
+
+Another interesting statistic of this data is that, although 3/4 of the respondents are from English speaking countries, only about 2/3 of the respondents are native English speakers.
+
+```{r, echo=FALSE}
+
+mosaicplot(table(PDGender$country, PDGender$engnatLabel), main = "Distribution by Country and Native English Speaking")
+
+table(PDGender$country, PDGender$engnatLabel)
+```
+Which, according to this mosaic plot, those non-native speakers mostly come from India and the Philippines. Which makes sense given their history and language data compared to other English speaking countries. Due to the fact that the Big Five is an English based test, we can expect most respondents to be English speakers. Also, because it's an American test, it is not surprising that the popularity of the test focuses on English speaking countries.
+
+
+
+### Trait Trends in Sex and English Nativity
+
+```{r, echo=FALSE}
 PDCombinedMelted %>%
-  ggplot( aes(x=engnatLabel, y=value, fill=name)) +
+  ggplot( aes(x=sex, y=value, fill=name, color=engnatLabel)) +
     geom_boxplot() +
     scale_fill_viridis(discrete = TRUE, alpha=0.3)+
     theme(
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
       plot.title = element_text(size=11)
     ) +
-    ggtitle("Traits by English Nativity Boxplot") +
+    ggtitle("Traits by English Native Speaking and Sex Boxplot") +
     xlab("") 
-
 ```
+Looking at the differences between the native English and non native English populations and breaking it down by sex, I noticed that while the female population did not seem to have big differences in trait expression with the possible exception of native speakers having higher agreeableness, the male population of native speakers tended to have higher openness and lower neuroticism. I decided to investigate these differences next.
+
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=openness)) + geom_histogram(data = ENmales, mapping = aes(x=openness,y=..density.., fill=engnatLabel), alpha=.5, bins = 30) + geom_histogram(data = NENmales, mapping = aes(x=openness,y=..density.., fill=engnatLabel), alpha=.5, bins = 30) + xlim(0, 5) +
+    ggtitle("Normalized Male Openness histogram") + xlab("")
+
+t.test(ENmales$openness, NENmales$openness)
+```
+Looking at the normalized histogram between native and non-native English speaking males, I could see the native population had a tendency to rate themselves higher in openness, as expected. I ran a t-test, and the p-value is lower than .05, indicating that the difference in means is a significant difference. It is, however, not a big difference, being 3.75 for English native males and 3.60 for non-native males.
+
 
 ```{r, echo=FALSE}
 
+ggplot(PDGender, aes(x=neuroticism)) + geom_histogram(data = ENmales, mapping = aes(x=neuroticism,y=..density.., fill=engnatLabel), alpha=.5, bins = 30) + geom_histogram(data = NENmales, mapping = aes(x=neuroticism,y=..density.., fill=engnatLabel), alpha=.5, bins = 30) + xlim(0, 5) +
+    ggtitle("Normalized Male Neuroticism histogram") + xlab("")
+t.test(ENmales$neuroticism, NENmales$neuroticism)
+```
+I found similar results with neuroticism, except this time English native males scored lower on neuroticism than their counterparts. This also represented a significant difference, with a greater difference in means- 2.65 for native and 2.81 for non-native.
 
 
-PDGender <- PDcombined
+### Correlations between Traits and Gender
+
+After investigating the effects of being an English Native Speaker, I became interested in delving into the effects of traits on each other and sex. When looking at the boxplot of sex and the traits, I noticed the female population seemed to be more agreeable, neurotic, and extroverted than the male population. Conscientiousness, on the other hand, did not appear to have significant differences. 
+
+```{r, echo=FALSE}
 
 PDCombinedMelted %>%
   ggplot( aes(x=name, y=value, fill=sex)) +
     geom_boxplot() +
     scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.01) +
     theme(
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
       plot.title = element_text(size=11)
@@ -224,204 +348,133 @@ PDCombinedMelted %>%
     xlab("")
 
 ```
-
-```{r, echo=FALSE}
-
-HighExtroversion <- subset.data.frame(PDGender, extroversion >= 4)
-
-
-HighEMelted <- pivot_longer(HighExtroversion, cols=c("extroversion", "conscientiousness", "openness", "agreeableness", "neuroticism"))
-
-HighEMelted %>%
-  ggplot( aes(x=name, y=value, fill=sex)) +
-    geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.05) +
-    theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Traits by Gender with High Extroversion Boxplot") +
-    xlab("")
-
-```
-
-```{r, echo=FALSE}
-
-LowExtroversion <- subset.data.frame(PDGender, extroversion <= 2)
-
-
-LowEMelted <- pivot_longer(LowExtroversion, cols=c("extroversion", "conscientiousness", "openness", "agreeableness", "neuroticism"))
-
-LowEMelted %>%
-  ggplot( aes(x=name, y=value, fill=sex)) +
-    geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.01) +
-    theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Traits by Gender with Low Extroversion Boxplot") +
-    xlab("")
-
-```
+This gave me the idea to plot the relationship between the traits themselves and look for differences in gender expression.
 
 
 ```{r, echo=FALSE}
-
-LowAC <- subset.data.frame(PDGender, agreeableness <= 2 & conscientiousness <= 2 )
-
-
-LowACMelted <- pivot_longer(LowAC, cols=c("extroversion", "conscientiousness", "openness", "agreeableness", "neuroticism"))
-
-LowACMelted %>%
-  ggplot( aes(x=name, y=value, fill=sex)) +
-    geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.05) +
-    theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Traits by Gender with Low Agreeableness and Conscientiousness Boxplot") +
-    xlab("")
-
-LowACMelted %>%
-  ggplot( aes(x=country, y=value, fill=name)) +
-    geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.05) +
-    theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Traits by Country with Low Agreeableness and Conscientiousness Boxplot") +
-    xlab("")
-
-```
-
-```{r, echo=FALSE}
-
-HighAC <- subset.data.frame(PDGender, agreeableness >= 4 & conscientiousness >= 4 )
-
-
-HighACMelted <- pivot_longer(HighAC, cols=c("extroversion", "conscientiousness", "openness", "agreeableness", "neuroticism"))
-
-HighACMelted %>%
-  ggplot( aes(x=name, y=value, fill=sex)) +
-    geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.05) +
-    theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Traits by Gender with High Agreeableness and Conscientiousness Boxplot") +
-    xlab("")
-
-
-HighACMelted %>%
-  ggplot( aes(x=country, y=value, fill=name)) +
-    geom_boxplot() +
-    scale_fill_viridis(discrete = TRUE, alpha=0.3) +
-    geom_jitter(color="blue", size=0.4, alpha=0.05) +
-    theme(
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Traits by Country with High Agreeableness and Conscientiousness Boxplot") +
-    xlab("")
-
-```
-
-```{r, echo=FALSE}
-
-PDGender$ACavg <- (PDGender$agreeableness+PDGender$conscientiousness)/2
-
-ggplot(PDGender, aes(x=ACavg, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Agreeableness and Conscientiousness Average relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(PDGender, aes(x=ACavg, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=neuroticism, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Agreeableness and Conscientiousness Average relationship with Neuroticism Scatter Plot") +
-    xlab("")
-
-ggplot(PDGender, aes(x=ACavg, y=openness)) + geom_point(data = PDGender, mapping = aes(x=ACavg, y=openness, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Agreeableness and Conscientiousness Average relationship with Openness to Experience Scatter Plot") +
-    xlab("")
-
-```
-
-```{r, echo=FALSE}
-
-PDGender$ACavg <- (PDGender$agreeableness+PDGender$conscientiousness)/2
-
-OtherCountries <- subset.data.frame(PDGender, country == "Other")
-
-ggplot(PDGender, aes(x=agreeableness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Agreeableness relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(PDGender, aes(x=conscientiousness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=conscientiousness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Conscientiousness relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(PDGender, aes(x=extroversion, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=extroversion, y=neuroticism, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Neuroticism relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-
-ggplot(OtherCountries, aes(x=agreeableness, y=extroversion)) + geom_point(data = OtherCountries, mapping = aes(x=agreeableness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Agreeableness relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(OtherCountries, aes(x=conscientiousness, y=extroversion)) + geom_point(data = OtherCountries, mapping = aes(x=conscientiousness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Conscientiousness relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(OtherCountries, aes(x=extroversion, y=neuroticism)) + geom_point(data = OtherCountries, mapping = aes(x=extroversion, y=neuroticism, color=country), alpha=.1) + xlim(0, 5) +
-    ggtitle("Neuroticism relationship with Extroversion Scatter Plot") +
-    xlab("")
 
 ggplot(PDGender, aes(x=agreeableness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
-    ggtitle("Agreeableness relationship with Extroversion Scatter Plot") +
-    xlab("")
+    ggtitle("Agreeableness vs Extroversion by Sex Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=sex)) 
 
-ggplot(PDGender, aes(x=conscientiousness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=conscientiousness, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
-    ggtitle("Conscientiousness relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(PDGender, aes(x=neuroticism, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=neuroticism, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
-    ggtitle("Neuroticism relationship with Extroversion Scatter Plot") +
-    xlab("")
-
+cor(PDGender$agreeableness, PDGender$extroversion)
 ```
+First I checked the relationship between agreeableness and extroversion. According to the graph, there is little difference between the male and female populations, though both had a positive correlation. Simply put, as extroversion increased, so did agreeableness. I checked the correlation coefficient, which turned out to be .333. This means that, while the correlation exists, it is a weak correlation and there is a lot of variability int he dataset. As a follow up question, I decided to look into the differences between countries on this relationship.
+
+
 ```{r, echo=FALSE}
 
-PDGender$ANavg <- (PDGender$agreeableness+PDGender$neuroticism)/2
-
-
-ggplot(PDGender, aes(x=ANavg, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=ANavg, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
-    ggtitle("Neuroticism Agreeableness Avg relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-ggplot(PDGender, aes(x=ANavg)) + geom_histogram(data = PDGender, mapping = aes(x=ANavg, color=sex), alpha=.1) + xlim(0, 5) +
-    ggtitle("Neuroticism Agreeableness Avg relationship with Extroversion Scatter Plot") +
-    xlab("")
-
-genderCount <- count(PDGender$sex)
-
-ggplot(genderCount, aes(x="", y=freq, fill=x)) +
-  geom_bar(stat="identity", width=1) + coord_polar("y", start=0)
-
-ggplot(PDGender, aes(x=age, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=age, y=extroversion, color=sex), alpha=.1) + xlim(0, 75)
-ggplot(PDGender, aes(x=age, y=openness)) + geom_point(data = PDGender, mapping = aes(x=age, y=openness, color=sex), alpha=.1) + xlim(0, 75)
-ggplot(PDGender, aes(x=age, y=conscientiousness)) + geom_point(data = PDGender, mapping = aes(x=age, y=conscientiousness, color=sex), alpha=.1) + xlim(0, 75)
-ggplot(PDGender, aes(x=age, y=neuroticism)) + geom_point(data = PDGender, mapping = aes(x=age, y=neuroticism, color=sex), alpha=.1) + xlim(0, 75)
-ggplot(PDGender, aes(x=age, y=agreeableness)) + geom_point(data = PDGender, mapping = aes(x=age, y=agreeableness, color=sex), alpha=.1) + xlim(0, 75)
+ggplot(PDGender, aes(x=agreeableness, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness vs Extroversion by Country Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=agreeableness, y=extroversion, color=country)) 
 
 ```
+In accordance with the previous findings, most countries displayed a similar trend. However, I did find that the average low agreeable Filipino person had a trend towards being lower in extroversion than other countries. This makes me wonder, what about the Philippines makes their personality ratings so different?
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=agreeableness, y=openness)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=openness, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness vs Openness by Sex Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=agreeableness, y=openness, color=sex)) 
+```
+When looking at the relationship between agreeableness and openness, it seems there is a lightly correlated slightly inclined relationship. According to the data, males appear to be more open to experience than females in general. This also becomes interesting when looking at the same graph but with countries.
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=agreeableness, y=openness)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=openness, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness vs Openness by Country Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=agreeableness, y=openness, color=country)) 
+```
+For an unknown reason, out of all of the countries measured including the average of 'Other' countries, the Philippines and India not only display differences with all other countries, but also display similar regression lines with each other. While at high agreeable levels their openness levels converge with the normal levels of other countries, at low levels they have less openness than normal. This could be a direction of further research.
+
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=neuroticism, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=neuroticism, y=extroversion, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism vs Extroversion by Sex Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=neuroticism, y=extroversion, color=sex)) 
+
+cor(PDGender$neuroticism, PDGender$extroversion)
+```
+Looking at the relationship between neuroticism and extroversion, there appears to be the same negative correlation within male and female populations. It's also more apparent in this graph that there is a consistent difference in the population mean for extroversion- females tend to rate themselves higher than males. The correlation coefficient turned out to be -0.262, so it is present and negative, but only slightly correlated.
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=neuroticism, y=extroversion)) + geom_point(data = PDGender, mapping = aes(x=neuroticism, y=extroversion, color=country), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism vs Extroversion by Country Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=neuroticism, y=extroversion, color=country)) 
+
+```
+And, this trend appears to be present in all countries measured, even if it is slight.
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=neuroticism, y=agreeableness)) + geom_point(data = PDGender, mapping = aes(x=neuroticism, y=agreeableness, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Neuroticism vs Agreeableness by Sex Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=neuroticism, y=agreeableness, color=sex)) 
+
+cor(PDGender$neuroticism, PDGender$agreeableness)
+```
+Looking at the relationship between neuroticism and agreeableness we see that females tend to rate themselves as more agreeable than males. There also appears to be a slightly negative correlation between agreeableness and neuroticism. Stated simply, the more neurotic you are, the less likely you are to be agreeable. The correlation coefficient is not high, however, resting at only -.11. This means that while the relationship exists, there is a high amount of variability and the relationship is not very explanatory. I checked the same graph by country, but there didn't appear to be significant differences between countries regarding this relationship.
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=agreeableness, y=conscientiousness)) + geom_point(data = PDGender, mapping = aes(x=agreeableness, y=conscientiousness, color=sex), alpha=.1) + xlim(0, 5) +
+    ggtitle("Agreeableness vs Conscientiousness by Sex Scatter Plot") +
+    xlab("")+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=agreeableness, y=conscientiousness, color=sex)) 
+cor(PDGender$agreeableness, PDGender$conscientiousness)
+```
+And the last graph for this section is the relationship between conscientiousness and agreeableness. There is a slight correlation between the two, but like with other findings the relationship is not big. The correlation coefficient is only .176, which makes it larger than some of the relationships we've seen, but still rather small for explanatory purposes..
+
+
+
+
+### Trait Combined Averages by Age, Sex, and Country
+
+From the prior graphs, we know that there are several slight relationships between these traits and gender/country. I wanted to check if these relationships persist or change depending on population age.
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=age, y=ANavg)) + geom_point(data = PDGender, mapping = aes(x=age, y=ANavg, color=sex), alpha=.1) + xlim(0, 75) + geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=ANavg, color=sex))  +
+    ggtitle("Agreeableness Neuroticism Average by Sex and Age Scatter Plot")
+
+t.test(males$ANavg, females$ANavg)
+
+```
+The first graph is the relationship between agreeableness and neuroticism. We already know that females tend to rate themselves as more agreeable and neurotic than their male counterparts on average. However, I wanted to check if this relationship changes based on age. The data indicates that, while females do tend to rate themselves higher on these two traits, the difference between males and females decreases as the population becomes older. I then ran a T test to determine if these populations were significantly different. The answer is yes, the relationship between agreeableness and neuroticism when looking at male and female populations is significantly different with a P value of under .05. The male population had a mean of 2.98 and the female population had a mean of 3.29, which appears to me to be a rather large difference.
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=age, y=EAavg)) + geom_point(data = PDGender, mapping = aes(x=age, y=EAavg, color=sex), alpha=.1) + xlim(0, 75) + geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=EAavg, color=sex))   +
+    ggtitle("Extroversion Agreeableness Average by Sex and Age Scatter Plot")
+
+t.test(males$EAavg, females$EAavg)
+```
+Looking at the relationship between extroversion and agreeableness, there also appears to be a consistent trend towards females rating themselves as more extroverted and agreeable than males. This relationship also appears to become slightly more pronounced with older populations. I ran a T test and found that this difference is also significant, having a P value of lower than .05. The means of each population are not as different as the means for agreeableness and neuroticism, however, with males having a mean of 2.85 and females having a mean of 3.06.
+
+
+```{r, echo=FALSE}
+
+ggplot(PDGender, aes(x=age, y=ECavg)) + geom_point(data = PDGender, mapping = aes(x=age, y=ECavg, color=sex), alpha=.1) + xlim(0, 75) + geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=ECavg, color=sex))    +
+    ggtitle("Extroversion Conscientiousness Average by Sex and Age Scatter Plot")
+
+t.test(males$ECavg, females$ECavg)
+```
+Looking at the relationship between Extroversion and Conscientiousness, we see that while there doesn't appear to be a big difference between males and females in younger populations, older populations have a slightly more pronounced difference with females on average being more extroverted and agreeable. Looking at the T-test results, these two populations are also significantly different, though the actual difference is slight with males having a mean of 2.69 and females having a mean of 2.76.
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=age, y=ECavg)) + geom_point(data = PDGender, mapping = aes(x=age, y=ECavg, color=country), alpha=.1) + xlim(0, 75) + geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=ECavg, color=country))  +
+    ggtitle("Extroversion Conscientiousness Average by Country and Age Scatter Plot")
+```
+While the difference may be slight for sex, there does appear to be something interesting happening between countries. The Philippines regression line looks very different from all of the other countries. It seems, while younger populations of the Philippines are similar to other countries' younger populations, older Philippines populations tend to be more extroverted and conscientious. This could be another direction for further research and analysis.
+
+
+
+```{r, echo=FALSE}
+ggplot(PDGender, aes(x=age, y=OCEANavg)) + geom_point(data = PDGender, mapping = aes(x=age, y=OCEANavg, color=sex), alpha=.1) + xlim(0, 75)+ geom_smooth(formula = y ~ x,method = "lm", se = FALSE, data = PDGender, mapping = aes(x=age, y=OCEANavg, color=sex))  +
+    ggtitle("OCEAN Average by Sex and Age Scatter Plot")
+
+t.test(males$OCEANavg, females$OCEANavg)
+
+```
+Lastly, I decided to average all of the traits and see if there were any relationships among the responses. The data indicates that women appear to rate themselves higher than men when averaging all traits, and the T test indicates this is a significant difference in populations. That being said, while this average number is fun, it's not very explanatory. It does not indicate a preference towards rating all questions highly, as we corrected the data for that bias earlier. It also does not explain which traits cause men to be lower than women. Only that, on average, men tend to be more introverted, less agreeable, less conscientious, less neurotic, and less open to experiences than women as a whole. 
 
 
 
@@ -429,9 +482,12 @@ ggplot(PDGender, aes(x=age, y=agreeableness)) + geom_point(data = PDGender, mapp
 (a) Git
 (b) RMarkdown
 (c) Statistical concepts such as normal distributions, mean, standard deviations, percentiles, and areas under the curve
-(d) Geometric distributions
+(d) Regression lines to find trends in trait expression.
 (e) T tests to determine if two populations are significantly different.
 
+
+
 ## Conclusion
+In conclusion, we discovered that men and women have a few significant differences between trait expression. Women tend to self report as being more extroverted, agreeable, and neurotic than men. We also discovered that English native speakers self report as being slightly more open to experience and less neurotic than their non-native counterparts. We determined that, while most countries most of the time have little difference in personality expression, the Philippines is an outlier with some interesting trends in trait expression and age. Lastly, it appears that across the board there are more responses and those responses are more varried with younger populations. While all of these findings are interesting, it's important to note that this is a self-reported online test. It does not reflect a true random sampling, and the responses could be biased based on inaccurate self conceptions of respondents or false responses by participants. The participants were informed that the results of this test would be used for scientific purposes. 
 
-
+Once again, this dataset was not created by myself, and can be found at [Kaggle](https://www.kaggle.com/datasets/lucasgreenwell/ocean-five-factor-personality-test-responses)

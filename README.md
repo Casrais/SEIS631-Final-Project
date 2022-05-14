@@ -17,6 +17,9 @@ employee while having high neuroticism is related to a variety of bad
 outcomes. I would like to see if there are relationships between the
 expression of different personality traits across countries and gender.
 
+This dataset was not created by myself, and can be found at
+[Kaggle](https://www.kaggle.com/datasets/lucasgreenwell/ocean-five-factor-personality-test-responses)
+
 ## Why
 
 While we know that the expression of certain combinations of personality
@@ -85,7 +88,9 @@ aggregated into an ‘Other’ country group.
 
 ## Comparing Subset Population to General Population
 
-After, I plan to use statistical analysis
+After, I plan to use statistical analysis to determine if the populations 
+I'm looking at are significantly different. If they are, it will mean 
+the findings are not caused by random chance.
 
 ## Considerations
 

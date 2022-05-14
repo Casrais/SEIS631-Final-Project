@@ -86,7 +86,7 @@ different countries, most with a low response rate, I plan on using data
 from only countries with a high response rate. The others will be
 aggregated into an ‘Other’ country group.
 
-## Comparing Subset Population to General Population
+## Comparing Subset Populations
 
 After, I plan to use statistical analysis to determine if the populations 
 I'm looking at are significantly different. If they are, it will mean 
@@ -117,9 +117,9 @@ high.
 2.  RMarkdown
 3.  Statistical concepts such as normal distributions, mean, standard
     deviations, percentiles, and areas under the curve
-4.  Geometric distributions
+4.  Regression lines
 5.  Statistics to determine if two populations are significantly
-    different.
+    different (T tests).
 
 ## Conclusion
 
